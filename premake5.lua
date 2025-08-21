@@ -18,7 +18,7 @@ project "SDL3 Input"
     includedirs
     {
         "./Source",
-        _MAIN_SCRIPT_DIR .. "/Dependencies/SDL3/include"
+        _MAIN_SCRIPT_DIR .. "/Dependencies/SDL/include"
     }
     links
     {

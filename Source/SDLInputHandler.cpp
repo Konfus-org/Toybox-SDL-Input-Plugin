@@ -1,9 +1,14 @@
 #include "SDLInputHandler.h"
+#include <Tbx/Debug/Debugging.h>
 
 namespace SDLInput
 {
     void SDLInputHandler::OnLoad()
     {
+        TBX_ASSERT(SDL_Init(SDL_INIT_EVENTS) != 0, "Failed to initialize SDL");
+        TBX_ASSERT(SDL_Init(SDL_INIT_GAMEPAD) != 0, "Failed to initialize SDL");
+        TBX_ASSERT(SDL_Init(SDL_INIT_HAPTIC) != 0, "Failed to initialize SDL");
+        TBX_ASSERT(SDL_Init(SDL_INIT_SENSOR) != 0, "Failed to initialize SDL");
     }
 
     void SDLInputHandler::OnUnload()
