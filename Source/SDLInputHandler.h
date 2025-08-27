@@ -29,19 +29,21 @@ namespace SDLInput
         bool IsMouseButtonDown(const int button) const override;
         bool IsMouseButtonUp(const int button) const override;
         bool IsMouseButtonHeld(const int button) const override;
-        Tbx::Vector2 GetMousePosition() const override; 
+        Tbx::Vector2 GetMousePosition() const override;
+
+        bool OnSDLEvent(SDL_Event* event);
     
     private:
         std::unordered_map<int, SDL_Gamepad*> _gamepads = {};
 
-        std::array<Uint8, SDL_NUM_SCANCODES> _currKeyState{};
-        std::array<Uint8, SDL_NUM_SCANCODES> _prevKeyState{};
+        std::unordered_map<int, std::array<bool, SDL_GAMEPAD_BUTTON_COUNT>> _currGamepadBtnState;
+        std::unordered_map<int, std::array<bool, SDL_GAMEPAD_BUTTON_COUNT>> _prevGamepadBtnState;
+
+        std::array<Uint8, SDL_SCANCODE_COUNT> _currKeyState{};
+        std::array<Uint8, SDL_SCANCODE_COUNT> _prevKeyState{};
 
         Uint32 _currMouseState = 0;
         Uint32 _prevMouseState = 0;
-
-        std::unordered_map<int, std::array<Uint8, SDL_GAMEPAD_BUTTON_MAX>> _currGamepadBtnState;
-        std::unordered_map<int, std::array<Uint8, SDL_GAMEPAD_BUTTON_MAX>> _prevGamepadBtnState;
     };
 
     TBX_REGISTER_PLUGIN(SDLInputHandler);

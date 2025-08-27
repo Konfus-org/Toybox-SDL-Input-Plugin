@@ -8,6 +8,12 @@ namespace SDLInput
 {
     /* ==== Lifetime ==== */
 
+    static bool PumpSDLEventToHandler(void* inputHandler, SDL_Event* event)
+    {
+        ((SDLInputHandler*)inputHandler)->OnSDLEvent(event);
+        return false;
+    }
+
     SDLInputHandler::SDLInputHandler()
     {
         SDL_InitSubSystem(SDL_INIT_GAMEPAD);
@@ -22,6 +28,8 @@ namespace SDLInput
                 _gamepads[i]= SDL_OpenGamepad(i);
             }
         }
+
+        SDL_AddEventWatch(PumpSDLEventToHandler, nullptr);
     }
 
     SDLInputHandler::~SDLInputHandler()
@@ -51,65 +59,28 @@ namespace SDLInput
 
     void SDLInputHandler::Update()
     {
+        // Store previous states
         _prevKeyState = _currKeyState;
         _prevMouseState = _currMouseState;
         _prevGamepadBtnState = _currGamepadBtnState;
 
-        // Handle events
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-                case SDL_EVENT_JOYSTICK_ADDED:
-                {
-                    int numGamepads = 0;
-                    SDL_GetGamepads(&numGamepads);
-                    for (int i = 0; i < numGamepads; ++i)
-                    {
-                        if (SDL_IsGamepad(i))
-                        {
-                            _gamepads[i] = SDL_OpenGamepad(i);
-                        }
-                    }
-                    break;
-                }
-                case SDL_EVENT_JOYSTICK_REMOVED:
-                {
-                    int id = event.jdevice.which;
-                    auto it = _gamepads.find(id);
-                    if (it != _gamepads.end() && it->second)
-                    {
-                        SDL_CloseGamepad(it->second);
-                        _gamepads.erase(it);
-                        _currGamepadBtnState.erase(id);
-                        _prevGamepadBtnState.erase(id);
-                    }
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-
-        const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
-        if (keyboardState)
-        {
-            std::memcpy(_currKeyState.data(), keyboardState, sizeof(Uint8) * SDL_NUM_SCANCODES);
-        }
-
-        _currMouseState = SDL_GetMouseState(nullptr, nullptr);
-
+        // Get latest states
         for (auto& [id, gamepad] : _gamepads)
         {
             if (!gamepad) continue;
-            std::array<Uint8, SDL_GAMEPAD_BUTTON_MAX> buttons{};
-            for (int b = 0; b < SDL_GAMEPAD_BUTTON_MAX; ++b)
+            std::array<bool, SDL_GAMEPAD_BUTTON_COUNT> buttons{};
+            for (int b = 0; b < SDL_GAMEPAD_BUTTON_COUNT; ++b)
             {
                 buttons[b] = SDL_GetGamepadButton(gamepad, static_cast<SDL_GamepadButton>(b));
             }
             _currGamepadBtnState[id] = buttons;
         }
+        const bool* keyboardState = SDL_GetKeyboardState(nullptr);
+        if (keyboardState)
+        {
+            std::memcpy(_currKeyState.data(), keyboardState, sizeof(bool) * SDL_SCANCODE_COUNT);
+        }
+        _currMouseState = SDL_GetMouseState(nullptr, nullptr);
     }
 
     /* ==== Keyboard ==== */
@@ -198,5 +169,42 @@ namespace SDLInput
         bool curr = currIt->second[sdlBtn];
         bool prev = (prevIt != _prevGamepadBtnState.end()) ? prevIt->second[sdlBtn] : false;
         return curr && prev;
+    }
+
+    bool SDLInputHandler::OnSDLEvent(SDL_Event* event)
+    {
+        switch (event->type)
+        {
+            case SDL_EVENT_JOYSTICK_ADDED:
+            {
+                int numGamepads = 0;
+                SDL_GetGamepads(&numGamepads);
+                for (int i = 0; i < numGamepads; ++i)
+                {
+                    if (SDL_IsGamepad(i))
+                    {
+                        _gamepads[i] = SDL_OpenGamepad(i);
+                    }
+                }
+                break;
+            }
+            case SDL_EVENT_JOYSTICK_REMOVED:
+            {
+                int id = event->jdevice.which;
+                auto it = _gamepads.find(id);
+                if (it != _gamepads.end() && it->second)
+                {
+                    SDL_CloseGamepad(it->second);
+                    _gamepads.erase(it);
+                    _currGamepadBtnState.erase(id);
+                    _prevGamepadBtnState.erase(id);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+
+        return false;
     }
 }
