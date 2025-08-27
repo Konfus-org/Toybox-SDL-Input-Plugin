@@ -2,6 +2,7 @@
 #include "SDLTbxInputCodeConverters.h"
 #include <Tbx/Events/EventCoordinator.h>
 #include <Tbx/Debug/Debugging.h>
+#include <cstring>
 
 namespace SDLInput
 {
@@ -50,32 +51,16 @@ namespace SDLInput
 
     void SDLInputHandler::Update()
     {
+        _prevKeyState = _currKeyState;
+        _prevMouseState = _currMouseState;
+        _prevGamepadBtnState = _currGamepadBtnState;
+
         // Handle events
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
             switch (event.type)
             {
-                case SDL_EVENT_KEY_DOWN:
-                {
-                    break;
-                }
-                case SDL_EVENT_KEY_UP:
-                {
-                    break;
-                }
-                case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                {
-                    break;
-                }
-                case SDL_EVENT_MOUSE_BUTTON_UP:
-                {
-                    break;
-                }
-                case SDL_EVENT_MOUSE_MOTION:
-                {
-                    break;
-                }
                 case SDL_EVENT_JOYSTICK_ADDED:
                 {
                     int numGamepads = 0;
@@ -96,69 +81,9 @@ namespace SDLInput
                     if (it != _gamepads.end() && it->second)
                     {
                         SDL_CloseGamepad(it->second);
-                        it->second = nullptr;
-                    }
-                    break;
-                }
-                case SDL_EVENT_JOYSTICK_AXIS_MOTION:
-                {
-                    int id = event.jaxis.which;
-                    auto it = _gamepads.find(id);
-                    if (it != _gamepads.end() && it->second)
-                    {
-                        int axis = event.jaxis.axis;
-                        float value = event.jaxis.value;
-                    }
-                    break;
-                }
-                case SDL_EVENT_JOYSTICK_BALL_MOTION:
-                {
-                    int id = event.jball.which;
-                    auto it = _gamepads.find(id);
-                    if (it != _gamepads.end() && it->second)
-                    {
-                        int ball = event.jball.ball;
-                        int xrel = event.jball.xrel;
-                        int yrel = event.jball.yrel;
-                    }
-                    break;
-                }
-                case SDL_EVENT_JOYSTICK_HAT_MOTION:
-                {
-                    int id = event.jhat.which;
-                    auto it = _gamepads.find(id);
-                    if (it != _gamepads.end() && it->second)
-                    {
-                        int hat = event.jhat.hat;
-                        int value = event.jhat.value;
-                    }
-                    break;
-                }
-                case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
-                {
-                    int id = event.jbutton.which;
-                    auto it = _gamepads.find(id);
-                    if (it != _gamepads.end() && it->second)
-                    {
-                        int button = event.jbutton.button;
-                        bool curr = SDL_GetGamepadButton(it->second, (SDL_GamepadButton)button);
-                        if (curr)
-                        {
-                        }
-                    }
-                    break;
-                }
-                case SDL_EVENT_JOYSTICK_BUTTON_UP:
-                {
-                    int id = event.jbutton.which;
-                    auto it = _gamepads.find(id);
-                    if (it != _gamepads.end() && it->second)
-                    {
-                        int button = event.jbutton.button;
-                        bool curr = SDL_GetGamepadButton(it->second, (SDL_GamepadButton)button);
-                        if (!curr)
-                        {
-                        }
+                        _gamepads.erase(it);
+                        _currGamepadBtnState.erase(id);
+                        _prevGamepadBtnState.erase(id);
                     }
                     break;
                 }
@@ -166,55 +91,71 @@ namespace SDLInput
                     break;
             }
         }
+
+        const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
+        if (keyboardState)
+        {
+            std::memcpy(_currKeyState.data(), keyboardState, sizeof(Uint8) * SDL_NUM_SCANCODES);
+        }
+
+        _currMouseState = SDL_GetMouseState(nullptr, nullptr);
+
+        for (auto& [id, gamepad] : _gamepads)
+        {
+            if (!gamepad) continue;
+            std::array<Uint8, SDL_GAMEPAD_BUTTON_MAX> buttons{};
+            for (int b = 0; b < SDL_GAMEPAD_BUTTON_MAX; ++b)
+            {
+                buttons[b] = SDL_GetGamepadButton(gamepad, static_cast<SDL_GamepadButton>(b));
+            }
+            _currGamepadBtnState[id] = buttons;
+        }
     }
 
     /* ==== Keyboard ==== */
 
     bool SDLInputHandler::IsKeyDown(const int keyCode) const
     {
-        const auto* keyboardState = SDL_GetKeyboardState(nullptr);
-        if (keyboardState == nullptr) return false;
         SDL_Scancode sc = ConvertKey(keyCode);
-        return keyboardState[sc];
+        return _currKeyState[sc] && !_prevKeyState[sc];
     }
 
     bool SDLInputHandler::IsKeyUp(const int keyCode) const
     {
-        const auto* keyboardState = SDL_GetKeyboardState(nullptr);
-        if (keyboardState == nullptr) return false;
         SDL_Scancode sc = ConvertKey(keyCode);
-        return !keyboardState[sc];
+        return !_currKeyState[sc] && _prevKeyState[sc];
     }
 
     bool SDLInputHandler::IsKeyHeld(const int keyCode) const
     {
-        const auto* keyboardState = SDL_GetKeyboardState(nullptr);
-        if (keyboardState == nullptr) return false;
         SDL_Scancode sc = ConvertKey(keyCode);
-        return keyboardState[sc];
+        return _currKeyState[sc] && _prevKeyState[sc];
     }
 
     /* ==== Mouse ==== */
 
     bool SDLInputHandler::IsMouseButtonDown(const int button) const
     {
-        Uint32 mask = SDL_GetMouseState(nullptr, nullptr);
         int sdlBtn = ConvertMouseButton(button);
-        return (mask & SDL_BUTTON_MASK(sdlBtn));
+        bool curr = _currMouseState & SDL_BUTTON_MASK(sdlBtn);
+        bool prev = _prevMouseState & SDL_BUTTON_MASK(sdlBtn);
+        return curr && !prev;
     }
 
     bool SDLInputHandler::IsMouseButtonUp(const int button) const
     {
-        Uint32 mask = SDL_GetMouseState(nullptr, nullptr);
         int sdlBtn = ConvertMouseButton(button);
-        return !(mask & SDL_BUTTON_MASK(sdlBtn));
+        bool curr = _currMouseState & SDL_BUTTON_MASK(sdlBtn);
+        bool prev = _prevMouseState & SDL_BUTTON_MASK(sdlBtn);
+        return !curr && prev;
     }
 
     bool SDLInputHandler::IsMouseButtonHeld(const int button) const
     {
-        Uint32 mask = SDL_GetMouseState(nullptr, nullptr);
         int sdlBtn = ConvertMouseButton(button);
-        return (mask & SDL_BUTTON_MASK(sdlBtn));
+        bool curr = _currMouseState & SDL_BUTTON_MASK(sdlBtn);
+        bool prev = _prevMouseState & SDL_BUTTON_MASK(sdlBtn);
+        return curr && prev;
     }
 
     Tbx::Vector2 SDLInputHandler::GetMousePosition() const
@@ -228,30 +169,34 @@ namespace SDLInput
 
     bool SDLInputHandler::IsGamepadButtonDown(const int gamepadId, const int button) const
     {
-        auto it = _gamepads.find(gamepadId);
-        if (it == _gamepads.end() || !it->second) return false;
-
+        auto currIt = _currGamepadBtnState.find(gamepadId);
+        auto prevIt = _prevGamepadBtnState.find(gamepadId);
+        if (currIt == _currGamepadBtnState.end()) return false;
         int sdlBtn = ConvertGamepadButton(button);
-        bool curr = SDL_GetGamepadButton(it->second, (SDL_GamepadButton)sdlBtn);
-        return curr;
+        bool curr = currIt->second[sdlBtn];
+        bool prev = (prevIt != _prevGamepadBtnState.end()) ? prevIt->second[sdlBtn] : false;
+        return curr && !prev;
     }
 
     bool SDLInputHandler::IsGamepadButtonUp(const int gamepadId, const int button) const
     {
-        auto it = _gamepads.find(gamepadId);
-        if (it == _gamepads.end() || !it->second) return false;
-
+        auto currIt = _currGamepadBtnState.find(gamepadId);
+        auto prevIt = _prevGamepadBtnState.find(gamepadId);
+        if (currIt == _currGamepadBtnState.end()) return false;
         int sdlBtn = ConvertGamepadButton(button);
-        bool curr = SDL_GetGamepadButton(it->second, (SDL_GamepadButton)sdlBtn);
-        return !curr;
+        bool curr = currIt->second[sdlBtn];
+        bool prev = (prevIt != _prevGamepadBtnState.end()) ? prevIt->second[sdlBtn] : false;
+        return !curr && prev;
     }
 
     bool SDLInputHandler::IsGamepadButtonHeld(const int gamepadId, const int button) const
     {
-        auto it = _gamepads.find(gamepadId);
-        if (it == _gamepads.end() || !it->second) return false;
-
+        auto currIt = _currGamepadBtnState.find(gamepadId);
+        auto prevIt = _prevGamepadBtnState.find(gamepadId);
+        if (currIt == _currGamepadBtnState.end()) return false;
         int sdlBtn = ConvertGamepadButton(button);
-        return SDL_GetGamepadButton(it->second, (SDL_GamepadButton)sdlBtn);
+        bool curr = currIt->second[sdlBtn];
+        bool prev = (prevIt != _prevGamepadBtnState.end()) ? prevIt->second[sdlBtn] : false;
+        return curr && prev;
     }
 }
