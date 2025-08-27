@@ -15,7 +15,7 @@ namespace SDLInput
         void OnLoad() override;
         void OnUnload() override;
 
-        void SetContext(const std::shared_ptr<Tbx::IWindow>& windowToListenTo) override;
+        void Update() override;
 
         bool IsGamepadButtonDown(const int gamepadId, const int button) const override;
         bool IsGamepadButtonUp(const int gamepadId, const int button) const override;

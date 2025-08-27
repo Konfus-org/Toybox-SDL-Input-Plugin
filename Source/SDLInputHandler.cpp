@@ -5,7 +5,7 @@
 
 namespace SDLInput
 {
-    /* ==== Initialization ==== */
+    /* ==== Lifetime ==== */
 
     SDLInputHandler::SDLInputHandler()
     {
@@ -48,9 +48,124 @@ namespace SDLInput
         SDL_QuitSubSystem(SDL_INIT_SENSOR);
     }
 
-    void SDLInputHandler::SetContext(const std::shared_ptr<Tbx::IWindow>& windowToListenTo)
+    void SDLInputHandler::Update()
     {
-        // Do nothing...
+        // Handle events
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+                case SDL_EVENT_KEY_DOWN:
+                {
+                    break;
+                }
+                case SDL_EVENT_KEY_UP:
+                {
+                    break;
+                }
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                {
+                    break;
+                }
+                case SDL_EVENT_MOUSE_BUTTON_UP:
+                {
+                    break;
+                }
+                case SDL_EVENT_MOUSE_MOTION:
+                {
+                    break;
+                }
+                case SDL_EVENT_JOYSTICK_ADDED:
+                {
+                    int numGamepads = 0;
+                    SDL_GetGamepads(&numGamepads);
+                    for (int i = 0; i < numGamepads; ++i)
+                    {
+                        if (SDL_IsGamepad(i))
+                        {
+                            _gamepads[i] = SDL_OpenGamepad(i);
+                        }
+                    }
+                    break;
+                }
+                case SDL_EVENT_JOYSTICK_REMOVED:
+                {
+                    int id = event.jdevice.which;
+                    auto it = _gamepads.find(id);
+                    if (it != _gamepads.end() && it->second)
+                    {
+                        SDL_CloseGamepad(it->second);
+                        it->second = nullptr;
+                    }
+                    break;
+                }
+                case SDL_EVENT_JOYSTICK_AXIS_MOTION:
+                {
+                    int id = event.jaxis.which;
+                    auto it = _gamepads.find(id);
+                    if (it != _gamepads.end() && it->second)
+                    {
+                        int axis = event.jaxis.axis;
+                        float value = event.jaxis.value;
+                    }
+                    break;
+                }
+                case SDL_EVENT_JOYSTICK_BALL_MOTION:
+                {
+                    int id = event.jball.which;
+                    auto it = _gamepads.find(id);
+                    if (it != _gamepads.end() && it->second)
+                    {
+                        int ball = event.jball.ball;
+                        int xrel = event.jball.xrel;
+                        int yrel = event.jball.yrel;
+                    }
+                    break;
+                }
+                case SDL_EVENT_JOYSTICK_HAT_MOTION:
+                {
+                    int id = event.jhat.which;
+                    auto it = _gamepads.find(id);
+                    if (it != _gamepads.end() && it->second)
+                    {
+                        int hat = event.jhat.hat;
+                        int value = event.jhat.value;
+                    }
+                    break;
+                }
+                case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+                {
+                    int id = event.jbutton.which;
+                    auto it = _gamepads.find(id);
+                    if (it != _gamepads.end() && it->second)
+                    {
+                        int button = event.jbutton.button;
+                        bool curr = SDL_GetGamepadButton(it->second, (SDL_GamepadButton)button);
+                        if (curr)
+                        {
+                        }
+                    }
+                    break;
+                }
+                case SDL_EVENT_JOYSTICK_BUTTON_UP:
+                {
+                    int id = event.jbutton.which;
+                    auto it = _gamepads.find(id);
+                    if (it != _gamepads.end() && it->second)
+                    {
+                        int button = event.jbutton.button;
+                        bool curr = SDL_GetGamepadButton(it->second, (SDL_GamepadButton)button);
+                        if (!curr)
+                        {
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
     }
 
     /* ==== Keyboard ==== */
