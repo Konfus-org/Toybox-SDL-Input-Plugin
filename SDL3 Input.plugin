@@ -1,7 +1,12 @@
 {
     "name": "SDL3 Input",
     "lib": "SDL3 Input.dll",
-    "priority": "0",
+    "dependencies": [
+        "SDL3 Windowing"
+    ],
+    "type": [
+        "Input"
+    ],
     "language": "C++",
     "version": "0.0.1",
     "author": "Konfus-dev",
