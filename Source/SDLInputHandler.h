@@ -31,6 +31,7 @@ namespace SDLInput
         bool IsMouseButtonUp(int button) const override;
         bool IsMouseButtonHeld(int button) const override;
         Tbx::Vector2 GetMousePosition() const override;
+        Tbx::Vector2 GetMouseDelta() const override;
 
         bool OnSDLEvent(SDL_Event* event);
     

@@ -122,6 +122,13 @@ namespace SDLInput
         return Tbx::Vector2(x, y);
     }
 
+    Tbx::Vector2 SDLInputHandler::GetMouseDelta() const
+    {
+        float x_delta, y_delta;
+        Uint32 button_state = SDL_GetRelativeMouseState(&x_delta, &y_delta);
+        return Tbx::Vector2(x_delta, y_delta);
+    }
+
     /* ==== Gamepads ==== */
 
     bool SDLInputHandler::IsGamepadButtonDown(int playerIndex, int button) const
@@ -159,6 +166,11 @@ namespace SDLInput
     float SDLInputHandler::GetGamepadAxis(int playerIndex, int axis) const
     {
         const auto sdlAxis = ConvertGamepadAxis(axis);
+        if (_gamepads.find(playerIndex) == _gamepads.end())
+        {
+            return 0.0f;
+        }
+
         auto* gamepad = _gamepads.find(playerIndex)->second;
         const auto axisVal = SDL_GetGamepadAxis(gamepad, sdlAxis);
 
