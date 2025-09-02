@@ -18,22 +18,28 @@ namespace SDLInput
 
         void Update() override;
 
-        bool IsGamepadButtonDown(const int gamepadId, const int button) const override;
-        bool IsGamepadButtonUp(const int gamepadId, const int button) const override;
-        bool IsGamepadButtonHeld(const int gamepadId, const int button) const override;
+        bool IsGamepadButtonDown(int playerIndex, int button) const override;
+        bool IsGamepadButtonUp(int playerIndex, int button) const override;
+        bool IsGamepadButtonHeld(int playerIndex, int button) const override;
+        float GetGamepadAxis(int playerIndex, int axis) const override;
 
-        bool IsKeyDown(const int keyCode) const override;
-        bool IsKeyUp(const int keyCode) const override;
-        bool IsKeyHeld(const int keyCode) const override;
+        bool IsKeyDown(int keyCode) const override;
+        bool IsKeyUp(int keyCode) const override;
+        bool IsKeyHeld(int keyCode) const override;
 
-        bool IsMouseButtonDown(const int button) const override;
-        bool IsMouseButtonUp(const int button) const override;
-        bool IsMouseButtonHeld(const int button) const override;
+        bool IsMouseButtonDown(int button) const override;
+        bool IsMouseButtonUp(int button) const override;
+        bool IsMouseButtonHeld(int button) const override;
         Tbx::Vector2 GetMousePosition() const override;
 
         bool OnSDLEvent(SDL_Event* event);
     
     private:
+        void InitGamepads();
+        void RegisterGamepad(SDL_JoystickID gp);
+        void CloseGamepads();
+        void CloseGamepad(int id);
+
         std::unordered_map<int, SDL_Gamepad*> _gamepads = {};
 
         std::unordered_map<int, std::array<bool, SDL_GAMEPAD_BUTTON_COUNT>> _currGamepadBtnState;
