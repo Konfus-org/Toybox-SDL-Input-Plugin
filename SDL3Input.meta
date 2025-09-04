@@ -1,6 +1,6 @@
 {
     "name": "SDL3 Input",
-    "lib": "SDL3 Input.dll",
+    "lib": "SDL3Input.dll",
     "dependencies": [
         "SDL3 Windowing"
     ],
