@@ -46,20 +46,22 @@ Testing/
 
 # Build
 Build/
+Generated/
 bin/
 obj/
 compileData.scor
 compileData.scor.gbl
 compileData.scor.t0000
 
-# Do not ignore my tools
-!Tools/**/*.dll
-!Tools/**/*.lib
-!Tools/**/*.pdb
-!Tools/**/*.exe
-
-# Do not ignore 3rd party dlls, libs, pdbs, and exes
-!Dependencies/**/*.dll
-!Dependencies/**/*.lib
-!Dependencies/**/*.pdb
-!Dependencies/**/*.exe
+# CMake
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+Makefile
+*.tlog
+*.recipe
+*.cmake
+*.pc
