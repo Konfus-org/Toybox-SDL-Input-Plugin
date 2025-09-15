@@ -1,16 +1,16 @@
 #pragma once
 #include <SDL3/SDL.h>
-#include <Tbx/Events/AppEvents.h>
-#include <Tbx/PluginAPI/RegisterPlugin.h>
+#include <Tbx/Plugins/Plugin.h>
+#include <Tbx/Input/IInputHandler.h>
 #include <array>
 #include <unordered_map>
 
 namespace SDLInput
 {
-    class SDLInputHandler : public Tbx::IInputHandlerPlugin
+    class SDLInputHandler : public Tbx::IInputHandler, public Tbx::Plugin
     {
     public:
-        SDLInputHandler();
+        SDLInputHandler(const std::weak_ptr<Tbx::App>& app);
         ~SDLInputHandler();
 
         void OnLoad() override;
