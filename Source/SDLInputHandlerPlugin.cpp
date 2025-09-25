@@ -1,4 +1,4 @@
-#include "SDLInputHandler.h"
+#include "SDLInputHandlerPlugin.h"
 #include "SDLTbxInputCodeConverters.h"
 #include <Tbx/Events/EventBus.h>
 #include <Tbx/Debug/Debugging.h>
@@ -10,22 +10,22 @@ namespace SDLInput
 
     static bool PumpSDLEventToHandler(void* inputHandler, SDL_Event* event)
     {
-        ((SDLInputHandler*)inputHandler)->OnSDLEvent(event);
+        ((SDLInputHandlerPlugin*)inputHandler)->OnSDLEvent(event);
         return false;
     }
 
-    SDLInputHandler::SDLInputHandler(const std::weak_ptr<Tbx::App>& app)
+    SDLInputHandlerPlugin::SDLInputHandlerPlugin(std::weak_ptr<Tbx::App> app)
     {
         SDL_AddEventWatch(PumpSDLEventToHandler, this);
     }
 
-    SDLInputHandler::~SDLInputHandler()
+    SDLInputHandlerPlugin::~SDLInputHandlerPlugin()
     {
         CloseGamepads();
         SDL_RemoveEventWatch(PumpSDLEventToHandler, this);
     }
 
-    void SDLInputHandler::OnLoad()
+    void SDLInputHandlerPlugin::OnLoad()
     {
         TBX_ASSERT(SDL_Init(SDL_INIT_GAMEPAD) != 0, "Failed to initialize SDL");
         TBX_ASSERT(SDL_Init(SDL_INIT_HAPTIC) != 0, "Failed to initialize SDL");
@@ -34,7 +34,7 @@ namespace SDLInput
         InitGamepads();
     }
 
-    void SDLInputHandler::OnUnload()
+    void SDLInputHandlerPlugin::OnUnload()
     {
         CloseGamepads();
 
@@ -43,7 +43,7 @@ namespace SDLInput
         SDL_QuitSubSystem(SDL_INIT_SENSOR);
     }
 
-    void SDLInputHandler::Update()
+    void SDLInputHandlerPlugin::Update()
     {
         // Store previous states
         _prevKeyState = _currKeyState;
@@ -71,19 +71,19 @@ namespace SDLInput
 
     /* ==== Keyboard ==== */
 
-    bool SDLInputHandler::IsKeyDown(int keyCode) const
+    bool SDLInputHandlerPlugin::IsKeyDown(int keyCode) const
     {
         SDL_Scancode sc = ConvertKey(keyCode);
         return _currKeyState[sc] && !_prevKeyState[sc];
     }
 
-    bool SDLInputHandler::IsKeyUp(int keyCode) const
+    bool SDLInputHandlerPlugin::IsKeyUp(int keyCode) const
     {
         SDL_Scancode sc = ConvertKey(keyCode);
         return !_currKeyState[sc] && _prevKeyState[sc];
     }
 
-    bool SDLInputHandler::IsKeyHeld(int keyCode) const
+    bool SDLInputHandlerPlugin::IsKeyHeld(int keyCode) const
     {
         SDL_Scancode sc = ConvertKey(keyCode);
         return _currKeyState[sc] && _prevKeyState[sc];
@@ -91,7 +91,7 @@ namespace SDLInput
 
     /* ==== Mouse ==== */
 
-    bool SDLInputHandler::IsMouseButtonDown(int button) const
+    bool SDLInputHandlerPlugin::IsMouseButtonDown(int button) const
     {
         int sdlBtn = ConvertMouseButton(button);
         bool curr = _currMouseState & SDL_BUTTON_MASK(sdlBtn);
@@ -99,7 +99,7 @@ namespace SDLInput
         return curr && !prev;
     }
 
-    bool SDLInputHandler::IsMouseButtonUp(int button) const
+    bool SDLInputHandlerPlugin::IsMouseButtonUp(int button) const
     {
         int sdlBtn = ConvertMouseButton(button);
         bool curr = _currMouseState & SDL_BUTTON_MASK(sdlBtn);
@@ -107,7 +107,7 @@ namespace SDLInput
         return !curr && prev;
     }
 
-    bool SDLInputHandler::IsMouseButtonHeld(int button) const
+    bool SDLInputHandlerPlugin::IsMouseButtonHeld(int button) const
     {
         int sdlBtn = ConvertMouseButton(button);
         bool curr = _currMouseState & SDL_BUTTON_MASK(sdlBtn);
@@ -115,14 +115,14 @@ namespace SDLInput
         return curr && prev;
     }
 
-    Tbx::Vector2 SDLInputHandler::GetMousePosition() const
+    Tbx::Vector2 SDLInputHandlerPlugin::GetMousePosition() const
     {
         float x, y;
         SDL_GetMouseState(&x, &y);
         return Tbx::Vector2(x, y);
     }
 
-    Tbx::Vector2 SDLInputHandler::GetMouseDelta() const
+    Tbx::Vector2 SDLInputHandlerPlugin::GetMouseDelta() const
     {
         float x_delta, y_delta;
         Uint32 button_state = SDL_GetRelativeMouseState(&x_delta, &y_delta);
@@ -131,7 +131,7 @@ namespace SDLInput
 
     /* ==== Gamepads ==== */
 
-    bool SDLInputHandler::IsGamepadButtonDown(int playerIndex, int button) const
+    bool SDLInputHandlerPlugin::IsGamepadButtonDown(int playerIndex, int button) const
     {
         const auto currIt = _currGamepadBtnState.find(playerIndex);
         const auto prevIt = _prevGamepadBtnState.find(playerIndex);
@@ -142,7 +142,7 @@ namespace SDLInput
         return curr && !prev;
     }
 
-    bool SDLInputHandler::IsGamepadButtonUp(int playerIndex, int button) const
+    bool SDLInputHandlerPlugin::IsGamepadButtonUp(int playerIndex, int button) const
     {
         const auto currIt = _currGamepadBtnState.find(playerIndex);
         const auto prevIt = _prevGamepadBtnState.find(playerIndex);
@@ -153,7 +153,7 @@ namespace SDLInput
         return !curr && prev;
     }
 
-    bool SDLInputHandler::IsGamepadButtonHeld(int playerIndex, int button) const
+    bool SDLInputHandlerPlugin::IsGamepadButtonHeld(int playerIndex, int button) const
     {
         const auto currIt = _currGamepadBtnState.find(playerIndex);
         const auto prevIt = _prevGamepadBtnState.find(playerIndex);
@@ -163,7 +163,7 @@ namespace SDLInput
         const bool prev = (prevIt != _prevGamepadBtnState.end()) ? prevIt->second[sdlBtn] : false;
         return curr && prev;
     }
-    float SDLInputHandler::GetGamepadAxis(int playerIndex, int axis) const
+    float SDLInputHandlerPlugin::GetGamepadAxis(int playerIndex, int axis) const
     {
         const auto sdlAxis = ConvertGamepadAxis(axis);
         if (_gamepads.find(playerIndex) == _gamepads.end())
@@ -180,7 +180,7 @@ namespace SDLInput
         return normalized;
     }
 
-    bool SDLInputHandler::OnSDLEvent(SDL_Event* event)
+    bool SDLInputHandlerPlugin::OnSDLEvent(SDL_Event* event)
     {
         switch (event->type)
         {
@@ -205,7 +205,7 @@ namespace SDLInput
         return false;
     }
 
-    void SDLInputHandler::CloseGamepad(int id)
+    void SDLInputHandlerPlugin::CloseGamepad(int id)
     {
         const auto it = _gamepads.find(id);
         if (it != _gamepads.end() && it->second)
@@ -217,7 +217,7 @@ namespace SDLInput
         }
     }
 
-    void SDLInputHandler::InitGamepads()
+    void SDLInputHandlerPlugin::InitGamepads()
     {
         int numGamepads = 0;
         auto* gp = SDL_GetGamepads(&numGamepads);
@@ -234,14 +234,14 @@ namespace SDLInput
         }
     }
 
-    void SDLInputHandler::RegisterGamepad(SDL_JoystickID gp)
+    void SDLInputHandlerPlugin::RegisterGamepad(SDL_JoystickID gp)
     {
         auto* gamepad = SDL_OpenGamepad(gp);
         auto playerIndex = SDL_GetGamepadPlayerIndex(gamepad);
         _gamepads[playerIndex] = gamepad;
     }
 
-    void SDLInputHandler::CloseGamepads()
+    void SDLInputHandlerPlugin::CloseGamepads()
     {
         for (const auto& [id, gamepad] : _gamepads)
         {

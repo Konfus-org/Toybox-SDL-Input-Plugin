@@ -7,11 +7,13 @@
 
 namespace SDLInput
 {
-    class SDLInputHandler : public Tbx::IInputHandler, public Tbx::Plugin
+    class SDLInputHandlerPlugin
+        : public Tbx::Plugin
+        , public Tbx::IInputHandler
     {
     public:
-        SDLInputHandler(const std::weak_ptr<Tbx::App>& app);
-        ~SDLInputHandler();
+        SDLInputHandlerPlugin(std::weak_ptr<Tbx::App> app);
+        ~SDLInputHandlerPlugin();
 
         void OnLoad() override;
         void OnUnload() override;
@@ -53,5 +55,5 @@ namespace SDLInput
         Uint32 _prevMouseState = 0;
     };
 
-    TBX_REGISTER_PLUGIN(SDLInputHandler);
+    TBX_REGISTER_PLUGIN(SDLInputHandlerPlugin);
 }
