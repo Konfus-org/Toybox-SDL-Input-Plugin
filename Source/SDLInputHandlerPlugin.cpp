@@ -1,6 +1,5 @@
 #include "SDLInputHandlerPlugin.h"
 #include "SDLTbxInputCodeConverters.h"
-#include <Tbx/Events/EventBus.h>
 #include <Tbx/Debug/Debugging.h>
 #include <cstring>
 
@@ -223,7 +222,6 @@ namespace SDLInput
         auto* gp = SDL_GetGamepads(&numGamepads);
         if (gp == nullptr || numGamepads == 0)
         {
-            TBX_TRACE_INFO("No gamepads detected.");
             return;
         }
 
