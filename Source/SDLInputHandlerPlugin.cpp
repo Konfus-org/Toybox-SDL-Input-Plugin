@@ -14,27 +14,19 @@ namespace SDLInput
     }
 
     SDLInputHandlerPlugin::SDLInputHandlerPlugin(std::weak_ptr<Tbx::App> app)
-    {
-        SDL_AddEventWatch(PumpSDLEventToHandler, this);
-    }
-
-    SDLInputHandlerPlugin::~SDLInputHandlerPlugin()
-    {
-        CloseGamepads();
-        SDL_RemoveEventWatch(PumpSDLEventToHandler, this);
-    }
-
-    void SDLInputHandlerPlugin::OnLoad()
+        : Tbx::Plugin(app)
     {
         TBX_ASSERT(SDL_Init(SDL_INIT_GAMEPAD) != 0, "Failed to initialize SDL");
         TBX_ASSERT(SDL_Init(SDL_INIT_HAPTIC) != 0, "Failed to initialize SDL");
         TBX_ASSERT(SDL_Init(SDL_INIT_SENSOR) != 0, "Failed to initialize SDL");
 
+        SDL_AddEventWatch(PumpSDLEventToHandler, this);
         InitGamepads();
     }
 
-    void SDLInputHandlerPlugin::OnUnload()
+    SDLInputHandlerPlugin::~SDLInputHandlerPlugin()
     {
+        SDL_RemoveEventWatch(PumpSDLEventToHandler, this);
         CloseGamepads();
 
         SDL_QuitSubSystem(SDL_INIT_GAMEPAD);

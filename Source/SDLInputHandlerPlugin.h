@@ -7,16 +7,13 @@
 
 namespace SDLInput
 {
-    class SDLInputHandlerPlugin
+    class SDLInputHandlerPlugin final
         : public Tbx::Plugin
         , public Tbx::IInputHandler
     {
     public:
         SDLInputHandlerPlugin(std::weak_ptr<Tbx::App> app);
-        ~SDLInputHandlerPlugin();
-
-        void OnLoad() override;
-        void OnUnload() override;
+        ~SDLInputHandlerPlugin() override;
 
         void Update() override;
 
