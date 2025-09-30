@@ -8,11 +8,11 @@
 namespace SDLInput
 {
     class SDLInputHandlerPlugin final
-        : public Tbx::Plugin
+        : public Tbx::IPlugin
         , public Tbx::IInputHandler
     {
     public:
-        SDLInputHandlerPlugin(std::weak_ptr<Tbx::App> app);
+        SDLInputHandlerPlugin(Tbx::Ref<Tbx::EventBus> eventBus);
         ~SDLInputHandlerPlugin() override;
 
         void Update() override;

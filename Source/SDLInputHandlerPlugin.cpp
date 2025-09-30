@@ -13,8 +13,7 @@ namespace SDLInput
         return false;
     }
 
-    SDLInputHandlerPlugin::SDLInputHandlerPlugin(std::weak_ptr<Tbx::App> app)
-        : Tbx::Plugin(app)
+    SDLInputHandlerPlugin::SDLInputHandlerPlugin(Tbx::Ref<Tbx::EventBus> eventBus)
     {
         TBX_ASSERT(SDL_Init(SDL_INIT_GAMEPAD) != 0, "Failed to initialize SDL");
         TBX_ASSERT(SDL_Init(SDL_INIT_HAPTIC) != 0, "Failed to initialize SDL");
