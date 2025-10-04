@@ -8,7 +8,7 @@
 namespace SDLInput
 {
     class SDLInputHandlerPlugin final
-        : public Tbx::IPlugin
+        : public Tbx::Plugin
         , public Tbx::IInputHandler
     {
     public:
